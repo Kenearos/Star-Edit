@@ -1,0 +1,37 @@
+# StarCraft-Kampagnen-MCP-Server ("Missions-Baumeister").
+#
+# Einbindung in ein bestehendes Setup mit Caddy als Reverse-Proxy:
+#   - Der Server lauscht intern auf Port 8000 (Streamable HTTP, Pfad /mcp).
+#   - Caddy terminiert TLS und leitet die Subdomain an diesen Service weiter.
+#     Siehe Caddyfile in diesem Repo.
+#
+# Start/Neustart:  ./run.sh         (oder: docker compose up -d --build)
+
+services:
+  sc-mcp:
+    build: .
+    image: starcraft-campaign-mcp:latest
+    container_name: sc-mcp
+    restart: unless-stopped
+    environment:
+      SC_TRANSPORT: "http"
+      SC_HOST: "0.0.0.0"
+      SC_PORT: "8000"
+      SC_MAPS_DIR: "/data/maps"
+    volumes:
+      # Karten, WAVs und fertige Missionen liegen auf dem Host und bleiben erhalten.
+      - ./data/maps:/data/maps
+    # Standardmaessig NICHT nach aussen exponiert; Caddy spricht den Service im
+    # gemeinsamen Docker-Netzwerk ueber den Namen "sc-mcp:8000" an.
+    # Zum lokalen Testen ohne Caddy diese Zeilen einkommentieren:
+    # ports:
+    #   - "8000:8000"
+    networks:
+      - web
+
+# Externes Netzwerk, in dem auch Caddy haengt. Passe den Namen an dein Setup an
+# (z.B. das von deinem bestehenden Caddy genutzte Netzwerk).
+networks:
+  web:
+    external: true
+    name: caddy

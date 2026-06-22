@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+README.md
+*.md
+data/maps/*.scx
+data/maps/*.scm
+data/maps/*.wav
+# Die Beispiel-Basis-Karte wird zur Laufzeit ueber das Volume bereitgestellt,
+# nicht ins Image gebacken (Volume ueberlagert /data/maps ohnehin).
