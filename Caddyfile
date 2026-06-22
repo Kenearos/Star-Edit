@@ -1,0 +1,16 @@
+# Caddy-Reverse-Proxy fuer den StarCraft-MCP-Server.
+#
+# Fuege diesen Block in deine bestehende Caddyfile ein (oder importiere die Datei).
+# Caddy holt automatisch ein TLS-Zertifikat fuer die Subdomain.
+#
+# Voraussetzung: Caddy und der sc-mcp-Container haengen im selben Docker-Netzwerk
+# (siehe docker-compose.yml -> networks). Dann ist der Service unter "sc-mcp:8000"
+# erreichbar.
+
+sc-mcp.pixel-by-design.de {
+	reverse_proxy sc-mcp:8000
+}
+
+# Hinweis: Der MCP-Endpunkt (Streamable HTTP) liegt unter dem Pfad /mcp, also
+# https://sc-mcp.pixel-by-design.de/mcp  -- genau diese URL traegst du in Claude
+# als Custom Connector ein.

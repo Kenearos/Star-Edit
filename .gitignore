@@ -1,0 +1,12 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Generierte Missionen / WAVs im Karten-Verzeichnis (Basis-Karte wird behalten,
+# siehe Negation unten).
+data/maps/*
+!data/maps/base-map.scx
+!data/maps/.gitkeep
