@@ -14,6 +14,16 @@ Die ganze Karten-Manipulation läuft über die Python-Bibliothek
 
 ---
 
+## Kampagne planen
+
+Bevor du baust: die wiederverwendbare, tool-verknüpfte Planungs-Vorlage
+[`docs/CAMPAIGN-TEMPLATE.md`](docs/CAMPAIGN-TEMPLATE.md) kopieren und Schritt für Schritt
+abarbeiten (Kampagnen-Header → Per-Mission-Block → Abschluss-Check). Hintergrund,
+code-abgesicherte Fähigkeitsübersicht und vollständige Gap-Analyse:
+[`docs/research/CAMPAIGN-RESEARCH.md`](docs/research/CAMPAIGN-RESEARCH.md).
+
+---
+
 ## In 3 Schritten loslegen
 
 ### 1. Server starten (ein Befehl)
@@ -83,6 +93,8 @@ die erste Mission bauen kannst.
 | Tool | Zweck |
 |------|-------|
 | `sc_list_maps` | listet alle Karten/Missionen im Verzeichnis *(nur lesen)* |
+| `sc_list_templates` | listet vorgefertigte Terrain-Templates mit Tileset/Größe *(nur lesen)* |
+| `sc_new_from_template` | erzeugt aus einem Template eine neue Arbeits-Basiskarte |
 | `sc_describe_map` | Übersicht: Tileset, Größe, Player-Setup, Locations, Trigger-Zusammenfassung *(nur lesen)* |
 | `sc_list_locations` | Locations auflisten *(nur lesen)* |
 | `sc_create_location` | Location anlegen (Mittelpunkt + Größe in Pixeln) |
@@ -170,6 +182,7 @@ Für HTTP lokal: `SC_TRANSPORT=http SC_PORT=8000 SC_MAPS_DIR=./data/maps python 
 | `SC_HOST` | `0.0.0.0` (HTTP) | Bind-Adresse |
 | `SC_PORT` | `8000` | Port |
 | `SC_MAPS_DIR` | `/data/maps` | Karten-/WAV-/Missions-Verzeichnis |
+| `SC_TEMPLATES_DIR` | `<SC_MAPS_DIR>/templates` | Verzeichnis mit Terrain-Templates |
 
 ---
 
