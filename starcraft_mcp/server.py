@@ -39,7 +39,8 @@ mcp = FastMCP(
         "vorhandenen Basis-Karte in /data/maps; nur Logik (Trigger), Texte, "
         "Locations, Player-Setup und Sounds werden bearbeitet. Typischer Ablauf: "
         "sc_list_maps -> sc_describe_map -> sc_create_location -> sc_add_trigger "
-        "-> sc_embed_wav -> sc_save_map."
+        "-> sc_embed_wav -> sc_save_map. Alternativ als Start: sc_list_templates -> "
+        "sc_new_from_template, um aus einer vorgefertigten Karte eine Basis zu erzeugen."
     ),
 )
 
@@ -162,6 +163,71 @@ def sc_list_triggers(
         "map": ws.base_name,
         "trigger_count": len(ws.trig.triggers),
         "triggers": [_summarize_trigger(i, t) for i, t in enumerate(ws.trig.triggers)],
+    }
+
+
+# --- Terrain-Templates --------------------------------------------------------
+
+
+@mcp.tool(
+    annotations=_READONLY,
+    description="Listet verfuegbare Terrain-Templates (vorgefertigte Basis-Karten) im "
+    "Template-Verzeichnis, jeweils mit Tileset und Groesse. Templates sind fertige "
+    ".scx/.scm-Karten (in SCMDraft gebaut oder fertige Maps), aus denen neue Missionen "
+    "starten - so entfaellt das manuelle Bauen einer Basis-Karte pro Mission. Lege "
+    "Templates in SC_TEMPLATES_DIR ab (Standard: <MAPS_DIR>/templates).",
+)
+def sc_list_templates() -> dict:
+    names = workspace.list_templates()
+    templates = []
+    for n in names:
+        try:
+            meta = workspace.read_terrain_meta(workspace.template_path(n))
+        except Exception as e:  # defektes/fremdes File darf den Call nicht kippen
+            meta = {"error": str(e)}
+        templates.append({"name": n, **meta})
+    return {
+        "templates_dir": workspace.TEMPLATES_DIR,
+        "count": len(templates),
+        "templates": templates,
+        "hinweis": (
+            "Mit sc_new_from_template eine Arbeitskopie als neue Basis-Karte anlegen."
+            if templates
+            else "Keine Templates gefunden. Lege fertige .scx/.scm-Karten in "
+            f"{workspace.TEMPLATES_DIR} ab, z.B. badlands_128.scx."
+        ),
+    }
+
+
+@mcp.tool(
+    annotations=_EDIT,
+    description="Erstellt aus einem Terrain-Template eine neue Arbeits-Basiskarte im "
+    "Karten-Verzeichnis (reine Datei-Kopie - das Terrain inkl. ISOM bleibt unveraendert). "
+    "Danach wie gewohnt mit sc_describe_map / sc_create_location / sc_add_trigger "
+    "bearbeiten und mit sc_save_map als Mission speichern.",
+)
+def sc_new_from_template(
+    template: str = Field(
+        description="Dateiname des Templates (siehe sc_list_templates)."
+    ),
+    output_name: str = Field(
+        description="Name der neuen Basis-Karte in /data/maps, z.B. "
+        "'mission01_base.scx'. Ohne Endung wird die des Templates uebernommen."
+    ),
+    overwrite: bool = Field(
+        default=False, description="Bestehende Datei ueberschreiben."
+    ),
+) -> dict:
+    out_path = workspace.new_from_template(template, output_name, overwrite)
+    meta = workspace.read_terrain_meta(out_path)
+    return {
+        "ok": True,
+        "map": os.path.basename(out_path),
+        "from_template": os.path.basename(template),
+        "tileset": meta.get("tileset"),
+        "size": {"width": meta.get("width"), "height": meta.get("height")},
+        "hinweis": "Neue Basis-Karte angelegt. Jetzt mit sc_describe_map oeffnen, "
+        "Logik hinzufuegen und mit sc_save_map als Mission speichern.",
     }
 
 

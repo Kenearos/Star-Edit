@@ -10,3 +10,8 @@ __pycache__/
 data/maps/*
 !data/maps/base-map.scx
 !data/maps/.gitkeep
+# Template-Ordner: Struktur + README einchecken, die Template-Maps selbst aber nicht
+# (koennen gross / lizenzbehaftet sein).
+!data/maps/templates/
+data/maps/templates/*
+!data/maps/templates/README.md

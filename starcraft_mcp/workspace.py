@@ -28,6 +28,13 @@ from richchk.model.richchk.trig.rich_trig_section import RichTrigSection
 # Verzeichnis mit Basis-Karten, WAVs und fertigen Missionen (gemountetes Volume).
 MAPS_DIR = os.environ.get("SC_MAPS_DIR", "/data/maps")
 
+# Verzeichnis mit Terrain-Templates (vorgefertigte Basis-Karten). Aus einer Vorlage
+# wird per new_from_template eine neue Arbeits-Basiskarte erzeugt. Standard: ein
+# Unterordner des Karten-Verzeichnisses (liegt damit im selben gemounteten Volume).
+TEMPLATES_DIR = os.environ.get(
+    "SC_TEMPLATES_DIR", os.path.join(MAPS_DIR, "templates")
+)
+
 _MPQ_IO = None
 _MPQ_LOCK = threading.Lock()
 
@@ -254,3 +261,68 @@ def list_maps() -> list[str]:
         for f in os.listdir(MAPS_DIR)
         if f.lower().endswith((".scx", ".scm"))
     )
+
+
+# --- Terrain-Templates --------------------------------------------------------
+
+
+def template_path(name: str) -> str:
+    """Absoluter Pfad eines Templates (kein Ausbrechen aus TEMPLATES_DIR)."""
+    return os.path.join(TEMPLATES_DIR, os.path.basename(name))
+
+
+def list_templates() -> list[str]:
+    if not os.path.isdir(TEMPLATES_DIR):
+        return []
+    return sorted(
+        f
+        for f in os.listdir(TEMPLATES_DIR)
+        if f.lower().endswith((".scx", ".scm"))
+    )
+
+
+def read_terrain_meta(path: str) -> dict:
+    """Liest Tileset + Groesse einer Karte (leichtgewichtig, ohne Workspace-Cache)."""
+    from richchk.model.richchk.dim.rich_dim_section import RichDimSection
+    from richchk.model.richchk.era.rich_era_section import RichEraSection
+
+    chk = get_mpq_io().read_chk_from_mpq(path)
+    dim = ChkQueryUtil.find_only_rich_section_in_chk(RichDimSection, chk)
+    era = ChkQueryUtil.find_only_rich_section_in_chk(RichEraSection, chk)
+    return {"tileset": era.tileset.name, "width": dim.width, "height": dim.height}
+
+
+def new_from_template(template_name: str, output_name: str, overwrite: bool) -> str:
+    """Kopiert ein Template als neue Arbeits-Basiskarte in MAPS_DIR.
+
+    Reine Datei-Kopie: das Terrain (inkl. ISOM) bleibt unangetastet. Die Kopie wird
+    danach wie jede Basis-Karte mit den sc_-Tools bearbeitet und per sc_save_map als
+    Mission gespeichert.
+
+    :return: absoluter Pfad der neuen Basis-Karte.
+    """
+    import shutil
+
+    src = template_path(template_name)
+    if not os.path.exists(src):
+        available = ", ".join(list_templates()) or "(keine)"
+        raise FileNotFoundError(
+            f"Template {os.path.basename(template_name)!r} nicht gefunden in "
+            f"{TEMPLATES_DIR}. Verfuegbar: {available}."
+        )
+    out_path = map_path(output_name)
+    if not (out_path.lower().endswith(".scx") or out_path.lower().endswith(".scm")):
+        # Endung des Templates uebernehmen, statt blind .scx anzuhaengen.
+        out_path += os.path.splitext(src)[1]
+    if os.path.exists(out_path) and not overwrite:
+        raise FileExistsError(
+            f"Datei existiert bereits: {os.path.basename(out_path)}. "
+            f"Setze overwrite=true zum Ueberschreiben."
+        )
+    if os.path.abspath(src) == os.path.abspath(out_path):
+        raise ValueError("Template und Ziel sind dieselbe Datei.")
+    shutil.copyfile(src, out_path)
+    # Falls eine gleichnamige Karte bereits im Speicher gecacht war: verwerfen,
+    # damit der naechste Zugriff die frische Kopie laedt.
+    discard_workspace(os.path.basename(out_path))
+    return out_path
