@@ -15,3 +15,8 @@ data/maps/*
 !data/maps/templates/
 data/maps/templates/*
 !data/maps/templates/README.md
+
+# graphify: Build-Cache und generierte Artefakte (jederzeit neu baubar)
+graphify-out/
+.planning/graphs/
+.planning/HANDOFF.json
